@@ -1,0 +1,8 @@
+FROM amazon/aws-cli
+
+RUN yum install -y curl
+
+COPY init-dynamodb.sh /init-dynamodb.sh
+RUN chmod +x /init-dynamodb.sh
+
+ENTRYPOINT ["/init-dynamodb.sh"]

@@ -9,8 +9,7 @@ def get(event, context):
     if item:
         response = {
             "statusCode": 200,
-            "body": json.dumps(item,
-                               cls=decimalencoder.DecimalEncoder)
+            "body": json.dumps(item,cls=decimalencoder.DecimalEncoder)
         }
     else:
         response = {

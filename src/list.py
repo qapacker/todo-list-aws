@@ -6,6 +6,7 @@ import todoList
 def list(event, context):
     # fetch all todos from the database
     result = todoList.get_items()
+    print("DEBUG - items:", result)
     # create a response
     response = {
         "statusCode": 200,

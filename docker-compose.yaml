@@ -1,0 +1,52 @@
+version: "3.8"
+
+services:
+
+  dynamodb:
+    image: amazon/dynamodb-local
+    container_name: dynamodb
+    ports:
+      - "8000:8000"
+    command: -jar DynamoDBLocal.jar -sharedDb -inMemory
+    networks:
+      - sam
+
+  dynamodb-init:
+    build:
+      context: .
+      dockerfile: Dockerfile.dynamodb-init
+    container_name: dynamodb-init
+    depends_on:
+      - dynamodb
+    networks:
+      - sam
+
+
+  sam-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: sam-api
+    depends_on:
+      - dynamodb
+      - dynamodb-init
+    working_dir: /app
+    environment:
+      SAM_CLI_CONTAINER_CONNECTION_TIMEOUT: 60
+      AWS_ACCESS_KEY_ID: dummy
+      AWS_SECRET_ACCESS_KEY: dummy
+      AWS_DEFAULT_REGION: us-east-1
+      DYNAMODB_ENDPOINT: http://dynamodb:8000
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    extra_hosts:
+      - "dynamodb.us-east-1.amazonaws.com:host-gateway"
+    ports:
+      - "3000:3000"
+    command: ./entrypoint.sh
+    networks:
+      - sam
+
+networks:
+  sam:
+    driver: bridge
