@@ -1,42 +1,126 @@
 pipeline {
     agent any
-    stages {
-        
-        stage('Staging'){
-            steps{
-                echo 'Starting staging job'
-                build job: 'PIPELINE-FULL-STAGING', parameters: [
-                      string(name:'ENVIRONMENT', value: "staging")]
-            }
-        }
-        stage('Merge'){
-            steps{
-                sh script: """
-                    set -x
-                    git branch -a
-                    git checkout -b develop origin/develop
-                    git checkout -b master origin/master
-                    git merge develop
-                """, label: "Merging code to master"
-                sshagent(['github']) {
-                    sh "git push origin master"
-                }
 
+    environment {
+        REPO_URL = 'https://github.com/qapacker/todo-list-aws.git'
+        BRANCH = 'develop'
+        STACK_NAME = 'todo-list-aws-staging'
+    }
+
+    stages {
+
+        stage('Get Code') {
+            steps {
+                git branch: "${BRANCH}", url: "${REPO_URL}"
             }
         }
-        stage('Production'){
-            steps{
-                
-                echo 'Starting production job'
-                build job: 'PIPELINE-FULL-PRODUCTION', parameters: [
-                      string(name:'ENVIRONMENT', value: "production")]
+
+        stage('Static Test') {
+            steps {
+                sh '''
+                    echo "📦 Ejecutando análisis estático"
+                    pip install flake8 bandit
+
+                    mkdir -p reports
+                    flake8 src/ --output-file=reports/flake8-report.txt || true
+                    bandit -r src/ -f json -o reports/bandit-report.json || true
+                '''
+                archiveArtifacts artifacts: 'reports/*', allowEmptyArchive: true
+            }
+        }
+
+        stage('Deploy') {
+            steps {
+                sh '''
+                    echo "🚀 Desplegando a entorno Staging con configuración de samconfig.toml"
+                    pip install aws-sam-cli
+
+                    sam build
+                    sam deploy \
+                        --config-env staging \
+                        --config-file samconfig.toml \
+                        --no-confirm-changeset \
+                        --no-fail-on-empty-changeset
+                '''
+            }
+        }
+
+        stage('Unit Test') {
+            steps {
+                sh '''
+                    echo "🧪 Ejecutando tests unitarios"
+                    pip install pytest
+
+                    mkdir -p reports
+                    pytest test/unit/TestToDo.py --junitxml=reports/unit-test-results.xml
+                '''
+            }
+            post {
+                always {
+                    junit 'reports/unit-test-results.xml'
+                }
+                failure {
+                    error("❌ Tests unitarios fallidos.")
+                }
+            }
+        }
+
+        stage('Rest Test') {
+            steps {
+                sh '''
+                    echo "🌐 Ejecutando tests REST con URL fija"
+                    pip install pytest requests
+
+                    mkdir -p reports
+                    pytest test/rest-test/test-rest.py --junitxml=reports/rest-api-results.xml
+                '''
+            }
+            post {
+                always {
+                    junit 'reports/rest-api-results.xml'
+                }
+                failure {
+                    error("❌ Tests REST fallidos.")
+                }
+            }
+        }
+
+        stage('Promote') {
+            steps {
+                sshagent (credentials: ['tu-id-credencial-ssh']) {
+                    sh '''
+                        echo "🚀 Creando rama release-candidate"
+                        git config --global user.email "info@qapacker.com"
+                        git config --global user.name "CI Bot"
+
+                        git checkout -b release-candidate
+                        git push origin release-candidate
+                    '''
+                }
+                withCredentials([string(credentialsId: 'github-token', variable: 'GITHUB_TOKEN')]) {
+                    sh '''
+                        echo "📨 Creando Pull Request automáticamente en GitHub"
+                        curl -X POST -H "Authorization: token $GITHUB_TOKEN" \
+                            -H "Accept: application/vnd.github.v3+json" \
+                            https://api.github.com/repos/qapacker/todo-list-aws/pulls \
+                            -d '{
+                              "title": "Promoción de versión - CI",
+                              "head": "release-candidate",
+                              "base": "master",
+                              "body": "Merge automático de develop a master para despliegue en producción"
+                            }'
+                    '''
+                }
             }
         }
     }
-    post { 
-        always { 
-            echo 'Clean env: delete dir'
-            cleanWs()
+
+    post {
+        failure {
+            echo "❌ Pipeline CI fallido."
+        }
+        success {
+            echo "✅ Pipeline CI finalizado correctamente y PR creado para producción."
         }
     }
 }

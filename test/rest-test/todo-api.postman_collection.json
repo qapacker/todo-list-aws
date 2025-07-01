@@ -1,0 +1,139 @@
+{
+  "info": {
+    "name": "Todo API - AWS Lambda",
+    "_postman_id": "e38c1081-76f3-4e77-bcf4-c2c8f8b8e091",
+    "description": "Colecci\u00f3n de pruebas para TODO API en AWS Lambda + API Gateway",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Crear TODO",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n    \"text\": \"Aprender AWS SAM\"\n}"
+        },
+        "url": {
+          "raw": "https://1jdpqyai5d.execute-api.us-east-1.amazonaws.com/Prod/todos/",
+          "protocol": "https",
+          "host": [
+            "1jdpqyai5d",
+            "execute-api",
+            "us-east-1",
+            "amazonaws",
+            "com"
+          ],
+          "path": [
+            "Prod",
+            "todos",
+            ""
+          ]
+        }
+      }
+    },
+    {
+      "name": "Listar TODOs",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "https://1jdpqyai5d.execute-api.us-east-1.amazonaws.com/Prod/todos",
+          "protocol": "https",
+          "host": [
+            "1jdpqyai5d",
+            "execute-api",
+            "us-east-1",
+            "amazonaws",
+            "com"
+          ],
+          "path": [
+            "Prod",
+            "todos"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Obtener TODO por ID",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "https://1jdpqyai5d.execute-api.us-east-1.amazonaws.com/Prod/todos/:id",
+          "protocol": "https",
+          "host": [
+            "1jdpqyai5d",
+            "execute-api",
+            "us-east-1",
+            "amazonaws",
+            "com"
+          ],
+          "path": [
+            "Prod",
+            "todos",
+            ":id"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Actualizar TODO",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n    \"text\": \"Aprender AWS SAM con pr\u00e1cticas\",\n    \"checked\": true\n}"
+        },
+        "url": {
+          "raw": "https://1jdpqyai5d.execute-api.us-east-1.amazonaws.com/Prod/todos/:id",
+          "protocol": "https",
+          "host": [
+            "1jdpqyai5d",
+            "execute-api",
+            "us-east-1",
+            "amazonaws",
+            "com"
+          ],
+          "path": [
+            "Prod",
+            "todos",
+            ":id"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Eliminar TODO",
+      "request": {
+        "method": "DELETE",
+        "url": {
+          "raw": "https://1jdpqyai5d.execute-api.us-east-1.amazonaws.com/Prod/todos/:id",
+          "protocol": "https",
+          "host": [
+            "1jdpqyai5d",
+            "execute-api",
+            "us-east-1",
+            "amazonaws",
+            "com"
+          ],
+          "path": [
+            "Prod",
+            "todos",
+            ":id"
+          ]
+        }
+      }
+    }
+  ]
+}
