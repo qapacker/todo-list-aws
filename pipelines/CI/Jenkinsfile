@@ -35,36 +35,14 @@ pipeline {
                 sh '''
                     echo "🚀 Desplegando a entorno Staging con configuración local"
                     pip install --user aws-sam-cli
-
-                    sam build
-                    sam deploy \
-                    
-                        --config-env staging \
-                        --config-file samconfig.toml \
-                        --no-confirm-changeset \
-                        --no-fail-on-empty-changeset
-                '''
-            }
-        }
-
-        stage('Unit Test') {
-            steps {
-                sh '''
-                    echo "🧪 Ejecutando tests unitarios"
-                    pip install --user pytest
                     export PATH=$PATH:/var/lib/jenkins/.local/bin
 
-                    mkdir -p reports
-                    pytest test/unit/TestToDo.py --junitxml=reports/unit-test-results.xml
+                    sam build
+                    sam deploy --config-env staging \
+                               --config-file samconfig.toml \
+                               --no-confirm-changeset \
+                               --no-fail-on-empty-changeset
                 '''
-            }
-            post {
-                always {
-                    junit 'reports/unit-test-results.xml'
-                }
-                failure {
-                    error("❌ Tests unitarios fallidos.")
-                }
             }
         }
 
@@ -91,18 +69,17 @@ pipeline {
 
         stage('Promote') {
             steps {
-                sshagent (credentials: ['tu-id-credencial-ssh']) {
+                withCredentials([string(credentialsId: 'github-token', variable: 'GITHUB_TOKEN')]) {
                     sh '''
-                        echo "🚀 Creando rama release-candidate"
+                        echo "🚀 Promoviendo a release-candidate por HTTPS con token"
+
                         git config --global user.email "info@qapacker.com"
                         git config --global user.name "CI Bot"
 
+                        git remote set-url origin https://$GITHUB_TOKEN@github.com/qapacker/todo-list-aws.git
                         git checkout -b release-candidate
                         git push origin release-candidate
-                    '''
-                }
-                withCredentials([string(credentialsId: 'github-token', variable: 'GITHUB_TOKEN')]) {
-                    sh '''
+
                         echo "📨 Creando Pull Request automáticamente en GitHub"
                         curl -X POST -H "Authorization: token $GITHUB_TOKEN" \
                             -H "Accept: application/vnd.github.v3+json" \

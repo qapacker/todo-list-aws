@@ -1,0 +1,26 @@
+src/create.py:23:20: W292 no newline at end of file
+src/get.py:12:36: E231 missing whitespace after ','
+src/create.py:23:20: W292 no newline at end of file
+src/get.py:12:36: E231 missing whitespace after ','
+src/create.py:23:20: W292 no newline at end of file
+src/get.py:12:36: E231 missing whitespace after ','
+src/create.py:23:20: W292 no newline at end of file
+src/get.py:12:36: E231 missing whitespace after ','
+src/create.py:23:20: W292 no newline at end of file
+src/get.py:12:36: E231 missing whitespace after ','
+src/create.py:23:20: W292 no newline at end of file
+src/get.py:12:36: E231 missing whitespace after ','
+src/create.py:23:20: W292 no newline at end of file
+src/get.py:12:36: E231 missing whitespace after ','
+src/create.py:23:20: W292 no newline at end of file
+src/get.py:12:36: E231 missing whitespace after ','
+src/create.py:23:20: W292 no newline at end of file
+src/get.py:12:36: E231 missing whitespace after ','
+src/create.py:23:20: W292 no newline at end of file
+src/get.py:12:36: E231 missing whitespace after ','
+src/create.py:23:20: W292 no newline at end of file
+src/get.py:12:36: E231 missing whitespace after ','
+src/create.py:23:20: W292 no newline at end of file
+src/get.py:12:36: E231 missing whitespace after ','
+src/create.py:23:20: W292 no newline at end of file
+src/get.py:12:36: E231 missing whitespace after ','
