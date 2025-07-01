@@ -38,7 +38,7 @@ pipeline {
 
                     mkdir -p reports
                     # Ejecutar solo tests GET o de solo lectura (debes tener un marker o carpeta específica)
-                    pytest test/rest-test/test-rest-cd/read_only --junitxml=reports/rest-readonly-results.xml
+                    pytest test/rest-test/test-rest-cd.py --junitxml=reports/rest-readonly-results.xml
                 '''
             }
             post {
