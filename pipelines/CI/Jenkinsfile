@@ -4,7 +4,8 @@ pipeline {
     environment {
         REPO_URL = 'https://github.com/qapacker/todo-list-aws.git'
         BRANCH = 'develop'
-        STACK_NAME = 'todo-list-aws-staging'
+        STACK_NAME = 'todo-list-aws'
+        PATH = "$PATH:/var/lib/jenkins/.local/bin"
     }
 
     stages {
@@ -18,8 +19,8 @@ pipeline {
         stage('Static Test') {
             steps {
                 sh '''
-                    echo "📦 Ejecutando análisis estático"
-                    pip install flake8 bandit
+                    echo "📦 Instalando herramientas de análisis"
+                    pip install --user flake8 bandit
 
                     mkdir -p reports
                     flake8 src/ --output-file=reports/flake8-report.txt || true
@@ -32,12 +33,11 @@ pipeline {
         stage('Deploy') {
             steps {
                 sh '''
-                    echo "🚀 Desplegando a entorno Staging con configuración de samconfig.toml"
-                    pip install aws-sam-cli
+                    echo "🚀 Desplegando a entorno Staging con configuración local"
+                    pip install --user aws-sam-cli
 
                     sam build
                     sam deploy \
-                        --config-env staging \
                         --config-file samconfig.toml \
                         --no-confirm-changeset \
                         --no-fail-on-empty-changeset
@@ -49,7 +49,8 @@ pipeline {
             steps {
                 sh '''
                     echo "🧪 Ejecutando tests unitarios"
-                    pip install pytest
+                    pip install --user pytest
+                    export PATH=$PATH:/var/lib/jenkins/.local/bin
 
                     mkdir -p reports
                     pytest test/unit/TestToDo.py --junitxml=reports/unit-test-results.xml
@@ -68,8 +69,9 @@ pipeline {
         stage('Rest Test') {
             steps {
                 sh '''
-                    echo "🌐 Ejecutando tests REST con URL fija"
-                    pip install pytest requests
+                    echo "🔗 Ejecutando tests REST con URL embebida"
+                    pip install --user pytest requests
+                    export PATH=$PATH:/var/lib/jenkins/.local/bin
 
                     mkdir -p reports
                     pytest test/rest-test/test-rest.py --junitxml=reports/rest-api-results.xml
