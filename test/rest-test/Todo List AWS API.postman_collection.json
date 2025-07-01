@@ -1,0 +1,148 @@
+{
+	"info": {
+		"_postman_id": "ecc42ed9-74c9-4c01-afd0-2ed5249ac3bf",
+		"name": "Todo List AWS API",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "28742603",
+		"_collection_link": "https://i2cat-postam.postman.co/workspace/unir~d2d32ee0-18fe-4f03-b797-124aeff10bc7/collection/28742603-ecc42ed9-74c9-4c01-afd0-2ed5249ac3bf?action=share&source=collection_link&creator=28742603"
+	},
+	"item": [
+		{
+			"name": "List Todos",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "https://v5wqv9mpki.execute-api.us-east-1.amazonaws.com/Prod/todos",
+					"protocol": "https",
+					"host": [
+						"v5wqv9mpki",
+						"execute-api",
+						"us-east-1",
+						"amazonaws",
+						"com"
+					],
+					"path": [
+						"Prod",
+						"todos"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Create Todo",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"id\": \"1\",\n    \"task\": \"Learn AWS SAM\",\n    \"done\": true\n}"
+				},
+				"url": {
+					"raw": "https://v5wqv9mpki.execute-api.us-east-1.amazonaws.com/Prod/todos/",
+					"protocol": "https",
+					"host": [
+						"v5wqv9mpki",
+						"execute-api",
+						"us-east-1",
+						"amazonaws",
+						"com"
+					],
+					"path": [
+						"Prod",
+						"todos",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get Todo",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "https://v5wqv9mpki.execute-api.us-east-1.amazonaws.com/Prod/todos/1",
+					"protocol": "https",
+					"host": [
+						"v5wqv9mpki",
+						"execute-api",
+						"us-east-1",
+						"amazonaws",
+						"com"
+					],
+					"path": [
+						"Prod",
+						"todos",
+						"1"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Update Todo",
+			"request": {
+				"method": "PUT",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"task\": \"Learn AWS SAM in depth\",\n    \"done\": true\n}"
+				},
+				"url": {
+					"raw": "https://v5wqv9mpki.execute-api.us-east-1.amazonaws.com/Prod/todos/1",
+					"protocol": "https",
+					"host": [
+						"v5wqv9mpki",
+						"execute-api",
+						"us-east-1",
+						"amazonaws",
+						"com"
+					],
+					"path": [
+						"Prod",
+						"todos",
+						"1"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Delete Todo",
+			"request": {
+				"method": "DELETE",
+				"header": [],
+				"url": {
+					"raw": "https://v5wqv9mpki.execute-api.us-east-1.amazonaws.com/Prod/todos/1",
+					"protocol": "https",
+					"host": [
+						"v5wqv9mpki",
+						"execute-api",
+						"us-east-1",
+						"amazonaws",
+						"com"
+					],
+					"path": [
+						"Prod",
+						"todos",
+						"1"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}
