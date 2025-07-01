@@ -38,6 +38,8 @@ pipeline {
 
                     sam build
                     sam deploy \
+                    
+                        --config-env staging \
                         --config-file samconfig.toml \
                         --no-confirm-changeset \
                         --no-fail-on-empty-changeset
