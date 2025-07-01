@@ -1,42 +1,63 @@
 pipeline {
     agent any
-    stages {
-        
-        stage('Staging'){
-            steps{
-                echo 'Starting staging job'
-                build job: 'PIPELINE-FULL-STAGING', parameters: [
-                      string(name:'ENVIRONMENT', value: "staging")]
-            }
-        }
-        stage('Merge'){
-            steps{
-                sh script: """
-                    set -x
-                    git branch -a
-                    git checkout -b develop origin/develop
-                    git checkout -b master origin/master
-                    git merge develop
-                """, label: "Merging code to master"
-                sshagent(['github']) {
-                    sh "git push origin master"
-                }
 
+    environment {
+        REPO_URL = 'https://github.com/qapacker/todo-list-aws.git'
+        BRANCH = 'master'
+        PATH = "$PATH:/var/lib/jenkins/.local/bin"
+    }
+
+    stages {
+
+        stage('Get Code') {
+            steps {
+                git branch: "${BRANCH}", url: "${REPO_URL}"
             }
         }
-        stage('Production'){
-            steps{
-                
-                echo 'Starting production job'
-                build job: 'PIPELINE-FULL-PRODUCTION', parameters: [
-                      string(name:'ENVIRONMENT', value: "production")]
+
+        stage('Deploy') {
+            steps {
+                sh '''
+                    pip install --user aws-sam-cli
+                    export PATH=$PATH:/var/lib/jenkins/.local/bin
+
+                    sam build
+                    sam deploy --config-env production \
+                               --config-file samconfig.toml \
+                               --no-confirm-changeset \
+                               --no-fail-on-empty-changeset
+                '''
+            }
+        }
+
+        stage('Rest Test') {
+            steps {
+                sh '''
+                    pip install --user pytest requests
+                    export PATH=$PATH:/var/lib/jenkins/.local/bin
+
+                    mkdir -p reports
+                    # Ejecutar solo tests GET o de solo lectura (debes tener un marker o carpeta específica)
+                    pytest test/rest-test/test-rest-cd/read_only --junitxml=reports/rest-readonly-results.xml
+                '''
+            }
+            post {
+                always {
+                    junit 'reports/rest-readonly-results.xml'
+                }
+                failure {
+                    error("❌ Tests REST solo lectura fallidos.")
+                }
             }
         }
     }
-    post { 
-        always { 
-            echo 'Clean env: delete dir'
-            cleanWs()
+
+    post {
+        failure {
+            echo "❌ Pipeline CD producción fallido."
+        }
+        success {
+            echo "✅ Pipeline CD producción finalizado correctamente."
         }
     }
 }
