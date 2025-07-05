@@ -1,42 +1,121 @@
 pipeline {
-    agent any
-    stages {
-        
-        stage('Staging'){
-            steps{
-                echo 'Starting staging job'
-                build job: 'PIPELINE-FULL-STAGING', parameters: [
-                      string(name:'ENVIRONMENT', value: "staging")]
-            }
-        }
-        stage('Merge'){
-            steps{
-                sh script: """
-                    set -x
-                    git branch -a
-                    git checkout -b develop origin/develop
-                    git checkout -b master origin/master
-                    git merge develop
-                """, label: "Merging code to master"
-                sshagent(['github']) {
-                    sh "git push origin master"
-                }
+    agent none
 
+    environment {
+        REPO_URL = 'https://github.com/qapacker/todo-list-aws.git'
+        BRANCH = 'develop'
+        STACK_NAME = 'todo-list-aws'
+        PATH = "$PATH:/var/lib/jenkins/.local/bin"
+    }
+
+    stages {
+
+        stage('Get Code') {
+            agent { label 'default' }
+            steps {
+                git branch: "${BRANCH}", url: "${REPO_URL}"
             }
         }
-        stage('Production'){
-            steps{
-                
-                echo 'Starting production job'
-                build job: 'PIPELINE-FULL-PRODUCTION', parameters: [
-                      string(name:'ENVIRONMENT', value: "production")]
+
+        stage('Static Test') {
+            agent { label 'agent-static' }
+            steps {
+                sh '''
+                    echo "📦 Instalando herramientas de análisis"
+                    pip install --user flake8 bandit
+
+                    mkdir -p reports
+                    flake8 src/ --output-file=reports/flake8-report.txt || true
+                    bandit -r src/ -f json -o reports/bandit-report.json || true
+                '''
+                archiveArtifacts artifacts: 'reports/*', allowEmptyArchive: true
+            }
+        }
+
+        stage('Deploy') {
+            agent { label 'default' }
+            steps {
+                sh '''
+                    echo "🚀 Desplegando a entorno Staging con configuración local"
+                    pip install --user aws-sam-cli
+                    export PATH=$PATH:/var/lib/jenkins/.local/bin
+
+                    sam build
+                    # Capturamos la URL del endpoint
+                    sam deploy --config-env staging \
+                               --config-file samconfig.toml \
+                               --no-confirm-changeset \
+                               --no-fail-on-empty-changeset > deploy_output.txt
+
+                    # Extraer la URL del endpoint del output
+                    grep -Eo 'https?://[a-zA-Z0-9./-]+' deploy_output.txt | tail -n1 > endpoint_url.txt
+                '''
+                archiveArtifacts artifacts: 'endpoint_url.txt', allowEmptyArchive: false
+            }
+        }
+
+        stage('Rest Test') {
+            agent { label 'agent-rest' }
+            steps {
+                copyArtifacts(projectName: env.JOB_NAME, selector: lastSuccessful(), filter: 'endpoint_url.txt')
+                sh '''
+                    echo "🔗 Ejecutando tests REST"
+                    pip install --user pytest requests
+                    export PATH=$PATH:/var/lib/jenkins/.local/bin
+
+                    ENDPOINT=$(cat endpoint_url.txt)
+                    echo "🌐 Usando endpoint: $ENDPOINT"
+
+                    mkdir -p reports
+                    ENDPOINT=$ENDPOINT pytest test/rest-test/test-rest.py --junitxml=reports/rest-api-results.xml
+                '''
+            }
+            post {
+                always {
+                    junit 'reports/rest-api-results.xml'
+                }
+                failure {
+                    error("❌ Tests REST fallidos.")
+                }
+            }
+        }
+
+        stage('Promote') {
+            agent { label 'default' }
+            steps {
+                withCredentials([string(credentialsId: 'github-token', variable: 'GITHUB_TOKEN')]) {
+                    sh '''
+                        echo "🚀 Promoviendo a release-candidate por HTTPS con token"
+
+                        git config --global user.email "info@qapacker.com"
+                        git config --global user.name "CI Bot"
+
+                        git remote set-url origin https://$GITHUB_TOKEN@github.com/qapacker/todo-list-aws.git
+                        git checkout -b release-candidate
+                        git push origin release-candidate
+
+                        echo "📨 Creando Pull Request automáticamente en GitHub"
+                        curl -X POST -H "Authorization: token $GITHUB_TOKEN" \
+                            -H "Accept: application/vnd.github.v3+json" \
+                            https://api.github.com/repos/qapacker/todo-list-aws/pulls \
+                            -d '{
+                              "title": "Promoción de versión - CI",
+                              "head": "release-candidate",
+                              "base": "master",
+                              "body": "Merge automático de develop a master para despliegue en producción"
+                            }'
+                    '''
+                }
             }
         }
     }
-    post { 
-        always { 
-            echo 'Clean env: delete dir'
-            cleanWs()
+
+    post {
+        failure {
+            echo "❌ Pipeline CI fallido."
+        }
+        success {
+            echo "✅ Pipeline CI finalizado correctamente y PR creado para producción."
         }
     }
 }
